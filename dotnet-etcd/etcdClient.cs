@@ -1,6 +1,7 @@
 ﻿using Etcdserverpb;
 using Grpc.Core;
 using System;
+using V3Lockpb;
 
 
 namespace dotnet_etcd
@@ -92,6 +93,8 @@ namespace dotnet_etcd
 
         private Lease.LeaseClient _leaseClient;
 
+        private Lock.LockClient _lockClient;
+
         /// <summary>
         /// Key-Value client through which operations like range/put on etcd can be performed
         /// </summary>
@@ -102,6 +105,11 @@ namespace dotnet_etcd
         /// on etcd members could be performed.
         /// </summary>
         private Cluster.ClusterClient _clusterClient;
+
+        /// <summary>
+        /// Client through which maintenance operations can be performed.
+        /// </summary>
+        private Maintenance.MaintenanceClient _maintenanceClient;
         #endregion
 
         #region Initializers
@@ -172,7 +180,9 @@ namespace dotnet_etcd
                 _kvClient = new KV.KVClient(_channel);
                 _watchClient = new Watch.WatchClient(_channel);
                 _leaseClient = new Lease.LeaseClient(_channel);
+                _lockClient = new Lock.LockClient(_channel);
                 _clusterClient = new Cluster.ClusterClient(_channel);
+                _maintenanceClient = new Maintenance.MaintenanceClient(_channel);
             }
             catch
             {

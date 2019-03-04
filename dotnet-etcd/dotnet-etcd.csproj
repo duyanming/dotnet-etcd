@@ -10,9 +10,8 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryUrl>https://github.com/shubhamranjan/dotnet-etcd</RepositoryUrl>
     <PackageProjectUrl>https://github.com/shubhamranjan/dotnet-etcd</PackageProjectUrl>
-    <PackageReleaseNotes>1. Add cluster maintenance methods for cluster members
-2. Target dotnet core 2.2 as well
-3. Update nuget packages</PackageReleaseNotes>
+    <PackageReleaseNotes>1.  Add overloads for all kv methods to accept appropriate etcd request objects.
+2. ResetConnection function now accepts param of type RpcException. Connection will only be reset, in case server is unavailable.</PackageReleaseNotes>
     <Authors>Shubham Ranjan</Authors>
     <Company />
     <Product />
@@ -26,15 +25,15 @@ Your applications can read and write data into etcd. A simple use-case is to sto
 Advanced uses take advantage of the consistency guarantees to implement database leader elections or do distributed locking across a cluster of workers.</Description>
     <PackageTags>etcd grpc etcdv3 etcd3</PackageTags>
     <SignAssembly>false</SignAssembly>
-    <PackageIconUrl>https://drive.google.com/uc?id=1MfMnMPh5nOl8W71X9COjD9ifWFBn1PuX</PackageIconUrl>
-    <Version>2.0.1</Version>
+    <PackageIconUrl>https://raw.githubusercontent.com/shubhamranjan/dotnet-etcd/master/docs/img/etcd-logo-rectangle.png</PackageIconUrl>
+    <Version>2.2.0</Version>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
-    <PackageReference Include="Grpc.Core" Version="1.17.0" />
-    <PackageReference Include="Grpc.Tools" Version="1.17.0">
+    <PackageReference Include="Grpc.Core" Version="1.18.0" />
+    <PackageReference Include="Grpc.Tools" Version="1.18.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

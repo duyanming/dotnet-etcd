@@ -9,6 +9,32 @@ namespace dotnet_etcd
 {
     public partial class EtcdClient : IDisposable
     {
+
+        /// <summary>
+        /// Get the etcd response for a specified RangeRequest
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>The etcd response for the specified request</returns>
+        public RangeResponse Get(RangeRequest request)
+        {
+            RangeResponse rangeResponse = new RangeResponse();
+            try
+            {
+                rangeResponse = _kvClient.Range(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
+                throw;
+            }
+            catch
+            {
+                throw;
+            }
+
+            return rangeResponse;
+        }
+
         /// <summary>
         /// Get the etcd response for a specified key
         /// </summary>
@@ -19,14 +45,34 @@ namespace dotnet_etcd
             RangeResponse rangeResponse = new RangeResponse();
             try
             {
-                rangeResponse = _kvClient.Range(new RangeRequest
+                rangeResponse = Get(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(key)
-                }, _headers);
+                });
             }
-            catch (RpcException)
+            catch
             {
-                ResetConnection();
+                throw;
+            }
+
+            return rangeResponse;
+        }
+
+        /// <summary>
+        /// Get the etcd response for a specified key in async
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>The etcd response for the specified request</returns>
+        public async Task<RangeResponse> GetAsync(RangeRequest request)
+        {
+            RangeResponse rangeResponse = new RangeResponse();
+            try
+            {
+                rangeResponse = await _kvClient.RangeAsync(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -47,16 +93,10 @@ namespace dotnet_etcd
             RangeResponse rangeResponse = new RangeResponse();
             try
             {
-                rangeResponse = await _kvClient.RangeAsync(new RangeRequest
+                rangeResponse = await GetAsync(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(key)
-                }
-                , _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -78,11 +118,6 @@ namespace dotnet_etcd
             {
                 rangeResponse = Get(key);
             }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
-            }
             catch
             {
                 throw;
@@ -102,11 +137,6 @@ namespace dotnet_etcd
             try
             {
                 rangeResponse = await GetAsync(key);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
             }
             catch
             {
@@ -128,17 +158,12 @@ namespace dotnet_etcd
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = _kvClient.Range(new RangeRequest
+                rangeResponse = Get(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
+                });
 
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
             }
             catch
             {
@@ -160,16 +185,11 @@ namespace dotnet_etcd
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = await _kvClient.RangeAsync(new RangeRequest
+                rangeResponse = await GetAsync(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -191,17 +211,12 @@ namespace dotnet_etcd
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = _kvClient.Range(new RangeRequest
+                rangeResponse = Get(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
+                });
 
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
             }
             catch
             {
@@ -223,16 +238,11 @@ namespace dotnet_etcd
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = await _kvClient.RangeAsync(new RangeRequest
+                rangeResponse = await GetAsync(new RangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -245,22 +255,17 @@ namespace dotnet_etcd
         /// <summary>
         /// Sets the key value in etcd
         /// </summary>
-        /// <param name="key">Key for which value need to be set</param>
-        /// <param name="val">Value corresponding the key</param>
+        /// <param name="request"></param>
         /// <returns></returns>
-        public PutResponse Put(string key, string val)
+        public PutResponse Put(PutRequest request)
         {
             try
             {
-                return _kvClient.Put(new PutRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key),
-                    Value = ByteString.CopyFromUtf8(val)
-                }, _headers);
+                return _kvClient.Put(request, _headers);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                ResetConnection();
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -268,6 +273,51 @@ namespace dotnet_etcd
                 throw;
             }
         }
+
+        /// <summary>
+        /// Sets the key value in etcd
+        /// </summary>
+        /// <param name="key">Key for which value need to be set</param>
+        /// <param name="val">Value corresponding the key</param>
+        /// <returns></returns>
+        public PutResponse Put(string key, string val)
+        {
+            try
+            {
+                return Put(new PutRequest
+                {
+                    Key = ByteString.CopyFromUtf8(key),
+                    Value = ByteString.CopyFromUtf8(val)
+                });
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Sets the key value in etcd in async
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<PutResponse> PutAsync(PutRequest request)
+        {
+            try
+            {
+                return await _kvClient.PutAsync(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
+                throw;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// Sets the key value in etcd in async
@@ -279,15 +329,32 @@ namespace dotnet_etcd
         {
             try
             {
-                return await _kvClient.PutAsync(new PutRequest
+                return await PutAsync(new PutRequest
                 {
                     Key = ByteString.CopyFromUtf8(key),
                     Value = ByteString.CopyFromUtf8(val)
-                }, _headers);
+                });
             }
-            catch (RpcException)
+            catch
             {
-                ResetConnection();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Delete the specified key in etcd
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public DeleteRangeResponse Delete(DeleteRangeRequest request)
+        {
+            try
+            {
+                return _kvClient.DeleteRange(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -304,14 +371,32 @@ namespace dotnet_etcd
         {
             try
             {
-                return _kvClient.DeleteRange(new DeleteRangeRequest
+                return Delete(new DeleteRangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(key)
-                }, _headers);
+                });
             }
-            catch (RpcException)
+            catch
             {
-                ResetConnection();
+                throw;
+            }
+        }
+
+
+        /// <summary>
+        /// Delete the specified key in etcd in async
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<DeleteRangeResponse> DeleteAsync(DeleteRangeRequest request)
+        {
+            try
+            {
+                return await _kvClient.DeleteRangeAsync(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -328,15 +413,10 @@ namespace dotnet_etcd
         {
             try
             {
-                return await _kvClient.DeleteRangeAsync(new DeleteRangeRequest
+                return await DeleteAsync(new DeleteRangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(key)
-                }, _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -353,16 +433,11 @@ namespace dotnet_etcd
             try
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
-                return _kvClient.DeleteRange(new DeleteRangeRequest
+                return Delete(new DeleteRangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -379,16 +454,11 @@ namespace dotnet_etcd
             try
             {
                 string rangeEnd = GetRangeEnd(prefixKey);
-                return await _kvClient.DeleteRangeAsync(new DeleteRangeRequest
+                return await DeleteAsync(new DeleteRangeRequest
                 {
                     Key = ByteString.CopyFromUtf8(prefixKey),
                     RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                }, _headers);
-            }
-            catch (RpcException)
-            {
-                ResetConnection();
-                throw;
+                });
             }
             catch
             {
@@ -410,9 +480,9 @@ namespace dotnet_etcd
             {
                 return _kvClient.Txn(request, _headers);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                ResetConnection();
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -435,9 +505,9 @@ namespace dotnet_etcd
             {
                 return await _kvClient.TxnAsync(request, _headers);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                ResetConnection();
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -459,9 +529,9 @@ namespace dotnet_etcd
             {
                 return _kvClient.Compact(request, _headers);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                ResetConnection();
+                ResetConnection(ex);
                 throw;
             }
             catch
@@ -469,7 +539,6 @@ namespace dotnet_etcd
                 throw;
             }
         }
-
 
         /// <summary>
         /// Compact compacts the event history in the etcd key-value store in async. The key-value
@@ -484,9 +553,9 @@ namespace dotnet_etcd
             {
                 return await _kvClient.CompactAsync(request, _headers);
             }
-            catch (RpcException)
+            catch (RpcException ex)
             {
-                ResetConnection();
+                ResetConnection(ex);
                 throw;
             }
             catch
