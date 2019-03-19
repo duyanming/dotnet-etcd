@@ -112,7 +112,7 @@ namespace dotnet_etcd
         {
             try
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive())
+                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
                 {
                     Task leaserTask = Task.Run(async () =>
                     {
@@ -153,7 +153,7 @@ namespace dotnet_etcd
 
             try
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive())
+                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
                 {
                     Task leaserTask = Task.Run(async () =>
                     {
@@ -199,7 +199,7 @@ namespace dotnet_etcd
 
             try
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive())
+                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
                 {
                     Task leaserTask = Task.Run(async () =>
                     {
@@ -245,7 +245,7 @@ namespace dotnet_etcd
 
             try
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive())
+                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
                 {
                     Task leaserTask = Task.Run(async () =>
                     {
@@ -282,5 +282,32 @@ namespace dotnet_etcd
             }
         }
 
+        public LeaseTimeToLiveResponse LeaseTimeToLive(LeaseTimeToLiveRequest request)
+        {
+
+            try
+            {
+                return _leaseClient.LeaseTimeToLive(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
+                throw;
+            }
+        }
+
+        public async Task<LeaseTimeToLiveResponse> LeaseTimeToLiveAsync(LeaseTimeToLiveRequest request)
+        {
+
+            try
+            {
+                return await _leaseClient.LeaseTimeToLiveAsync(request, _headers);
+            }
+            catch (RpcException ex)
+            {
+                ResetConnection(ex);
+                throw;
+            }
+        }
     }
 }
