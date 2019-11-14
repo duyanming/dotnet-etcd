@@ -1,9 +1,9 @@
-﻿using Etcdserverpb;
-using Google.Protobuf;
-using Grpc.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Etcdserverpb;
+using Google.Protobuf;
+using Grpc.Core;
 
 namespace dotnet_etcd
 {
@@ -15,21 +15,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns>The etcd response for the specified request</returns>
-        public RangeResponse Get(RangeRequest request)
+        public RangeResponse Get(RangeRequest request, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                rangeResponse = _kvClient.Range(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    rangeResponse = _balancer.GetConnection().kvClient.Range(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
 
             return rangeResponse;
@@ -40,20 +45,15 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>The etcd response for the specified key</returns>
         /// <param name="key">Key for which value need to be fetched</param>
-        public RangeResponse Get(string key)
+        public RangeResponse Get(string key, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
+
+            rangeResponse = Get(new RangeRequest
             {
-                rangeResponse = Get(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key)
+            }, headers);
+
 
             return rangeResponse;
         }
@@ -63,21 +63,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns>The etcd response for the specified request</returns>
-        public async Task<RangeResponse> GetAsync(RangeRequest request)
+        public async Task<RangeResponse> GetAsync(RangeRequest request, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                rangeResponse = await _kvClient.RangeAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    rangeResponse = await _balancer.GetConnection().kvClient.RangeAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
 
             return rangeResponse;
@@ -88,20 +93,15 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>The etcd response for the specified key</returns>
         /// <param name="key">Key for which value need to be fetched</param>
-        public async Task<RangeResponse> GetAsync(string key)
+        public async Task<RangeResponse> GetAsync(string key, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
+
+            rangeResponse = await GetAsync(new RangeRequest
             {
-                rangeResponse = await GetAsync(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key)
+            }, headers);
+
 
             return rangeResponse;
         }
@@ -111,17 +111,12 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>The value for the specified key</returns>
         /// <param name="key">Key for which value need to be fetched</param>
-        public string GetVal(string key)
+        public string GetVal(string key, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                rangeResponse = Get(key);
-            }
-            catch
-            {
-                throw;
-            }
+
+            rangeResponse = Get(key, headers);
+
 
             return rangeResponse.Count != 0 ? rangeResponse.Kvs[0].Value.ToStringUtf8().Trim() : string.Empty;
         }
@@ -131,17 +126,12 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>The value for the specified key</returns>
         /// <param name="key">Key for which value need to be fetched</param>
-        public async Task<string> GetValAsync(string key)
+        public async Task<string> GetValAsync(string key, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                rangeResponse = await GetAsync(key);
-            }
-            catch
-            {
-                throw;
-            }
+
+            rangeResponse = await GetAsync(key, headers);
+
 
             return rangeResponse.Count != 0 ? rangeResponse.Kvs[0].Value.ToStringUtf8().Trim() : string.Empty;
         }
@@ -151,24 +141,19 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>RangeResponse containing range of key-values</returns>
         /// <param name="prefixKey">Prefix key</param>
-        public RangeResponse GetRange(string prefixKey)
+        public RangeResponse GetRange(string prefixKey, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = Get(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
+            string rangeEnd = GetRangeEnd(prefixKey);
 
-            }
-            catch
+            rangeResponse = Get(new RangeRequest
             {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
+
+
 
             return rangeResponse;
         }
@@ -178,23 +163,17 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>RangeResponse containing range of key-values</returns>
         /// <param name="prefixKey">Prefix key</param>
-        public async Task<RangeResponse> GetRangeAsync(string prefixKey)
+        public async Task<RangeResponse> GetRangeAsync(string prefixKey, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = await GetAsync(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
-            }
-            catch
+            string rangeEnd = GetRangeEnd(prefixKey);
+
+            rangeResponse = await GetAsync(new RangeRequest
             {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
 
             return rangeResponse;
         }
@@ -204,24 +183,19 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>Dictionary containing range of key-values</returns>
         /// <param name="prefixKey">Prefix key</param>
-        public IDictionary<string, string> GetRangeVal(string prefixKey)
+        public IDictionary<string, string> GetRangeVal(string prefixKey, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = Get(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
+            string rangeEnd = GetRangeEnd(prefixKey);
 
-            }
-            catch
+            rangeResponse = Get(new RangeRequest
             {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
+
+
 
             return RangeRespondToDictionary(rangeResponse);
         }
@@ -231,23 +205,18 @@ namespace dotnet_etcd
         /// </summary>
         /// <returns>Dictionary containing range of key-values</returns>
         /// <param name="prefixKey">Prefix key</param>
-        public async Task<IDictionary<string, string>> GetRangeValAsync(string prefixKey)
+        public async Task<IDictionary<string, string>> GetRangeValAsync(string prefixKey, Metadata headers = null)
         {
             RangeResponse rangeResponse = new RangeResponse();
-            try
-            {
-                string rangeEnd = GetRangeEnd(prefixKey);
 
-                rangeResponse = await GetAsync(new RangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
-            }
-            catch
+            string rangeEnd = GetRangeEnd(prefixKey);
+
+            rangeResponse = await GetAsync(new RangeRequest
             {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
+
 
             return RangeRespondToDictionary(rangeResponse);
         }
@@ -257,21 +226,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public PutResponse Put(PutRequest request)
+        public PutResponse Put(PutRequest request, Metadata headers = null)
         {
-            try
+            PutResponse response = new PutResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _kvClient.Put(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().kvClient.Put(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -280,20 +256,15 @@ namespace dotnet_etcd
         /// <param name="key">Key for which value need to be set</param>
         /// <param name="val">Value corresponding the key</param>
         /// <returns></returns>
-        public PutResponse Put(string key, string val)
+        public PutResponse Put(string key, string val, Metadata headers = null)
         {
-            try
+
+            return Put(new PutRequest
             {
-                return Put(new PutRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key),
-                    Value = ByteString.CopyFromUtf8(val)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key),
+                Value = ByteString.CopyFromUtf8(val)
+            }, headers);
+
         }
 
         /// <summary>
@@ -301,21 +272,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<PutResponse> PutAsync(PutRequest request)
+        public async Task<PutResponse> PutAsync(PutRequest request, Metadata headers = null)
         {
-            try
+            PutResponse response = new PutResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _kvClient.PutAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().kvClient.PutAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
 
@@ -325,20 +303,15 @@ namespace dotnet_etcd
         /// <param name="key">Key for which value need to be set</param>
         /// <param name="val">Value corresponding the key</param>
         /// <returns></returns>
-        public async Task<PutResponse> PutAsync(string key, string val)
+        public async Task<PutResponse> PutAsync(string key, string val, Metadata headers = null)
         {
-            try
+
+            return await PutAsync(new PutRequest
             {
-                return await PutAsync(new PutRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key),
-                    Value = ByteString.CopyFromUtf8(val)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key),
+                Value = ByteString.CopyFromUtf8(val)
+            }, headers);
+
         }
 
         /// <summary>
@@ -346,40 +319,42 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public DeleteRangeResponse Delete(DeleteRangeRequest request)
+        public DeleteRangeResponse Delete(DeleteRangeRequest request, Metadata headers = null)
         {
-            try
+            DeleteRangeResponse response = new DeleteRangeResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _kvClient.DeleteRange(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().kvClient.DeleteRange(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
         /// Delete the specified key in etcd
         /// </summary>
         /// <param name="key">Key which needs to be deleted</param>
-        public DeleteRangeResponse Delete(string key)
+        public DeleteRangeResponse Delete(string key, Metadata headers = null)
         {
-            try
+
+            return Delete(new DeleteRangeRequest
             {
-                return Delete(new DeleteRangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key)
+            }, headers);
+
         }
 
 
@@ -388,82 +363,74 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<DeleteRangeResponse> DeleteAsync(DeleteRangeRequest request)
+        public async Task<DeleteRangeResponse> DeleteAsync(DeleteRangeRequest request, Metadata headers = null)
         {
-            try
+            DeleteRangeResponse response = new DeleteRangeResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _kvClient.DeleteRangeAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().kvClient.DeleteRangeAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
         /// Delete the specified key in etcd in async
         /// </summary>
         /// <param name="key">Key which needs to be deleted</param>
-        public async Task<DeleteRangeResponse> DeleteAsync(string key)
+        public async Task<DeleteRangeResponse> DeleteAsync(string key, Metadata headers = null)
         {
-            try
+
+            return await DeleteAsync(new DeleteRangeRequest
             {
-                return await DeleteAsync(new DeleteRangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(key)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(key)
+            }, headers);
+
         }
 
         /// <summary>
         /// Deletes all keys with the specified prefix
         /// </summary>
         /// <param name="prefixKey">Commin prefix of all keys that need to be deleted</param>
-        public DeleteRangeResponse DeleteRange(string prefixKey)
+        public DeleteRangeResponse DeleteRange(string prefixKey, Metadata headers = null)
         {
-            try
+
+            string rangeEnd = GetRangeEnd(prefixKey);
+            return Delete(new DeleteRangeRequest
             {
-                string rangeEnd = GetRangeEnd(prefixKey);
-                return Delete(new DeleteRangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
+
         }
 
         /// <summary>
         /// Deletes all keys with the specified prefix in async
         /// </summary>
         /// <param name="prefixKey">Commin prefix of all keys that need to be deleted</param>
-        public async Task<DeleteRangeResponse> DeleteRangeAsync(string prefixKey)
+        public async Task<DeleteRangeResponse> DeleteRangeAsync(string prefixKey, Metadata headers = null)
         {
-            try
+
+            string rangeEnd = GetRangeEnd(prefixKey);
+            return await DeleteAsync(new DeleteRangeRequest
             {
-                string rangeEnd = GetRangeEnd(prefixKey);
-                return await DeleteAsync(new DeleteRangeRequest
-                {
-                    Key = ByteString.CopyFromUtf8(prefixKey),
-                    RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
-                });
-            }
-            catch
-            {
-                throw;
-            }
+                Key = ByteString.CopyFromUtf8(prefixKey),
+                RangeEnd = ByteString.CopyFromUtf8(rangeEnd)
+            }, headers);
+
         }
 
         /// <summary>
@@ -474,21 +441,29 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public TxnResponse Transaction(TxnRequest request)
+        public TxnResponse Transaction(TxnRequest request, Metadata headers = null)
         {
-            try
+            TxnResponse response = new TxnResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _kvClient.Txn(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().kvClient.Txn(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
+
         }
 
         /// <summary>
@@ -499,21 +474,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<TxnResponse> TransactionAsync(TxnRequest request)
+        public async Task<TxnResponse> TransactionAsync(TxnRequest request, Metadata headers = null)
         {
-            try
+            TxnResponse response = new TxnResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _kvClient.TxnAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().kvClient.TxnAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -523,21 +505,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public CompactionResponse Compact(CompactionRequest request)
+        public CompactionResponse Compact(CompactionRequest request, Metadata headers = null)
         {
-            try
+            CompactionResponse response = new CompactionResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _kvClient.Compact(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().kvClient.Compact(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -547,21 +536,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<CompactionResponse> CompactAsync(CompactionRequest request)
+        public async Task<CompactionResponse> CompactAsync(CompactionRequest request, Metadata headers = null)
         {
-            try
+            CompactionResponse response = new CompactionResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _kvClient.CompactAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().kvClient.CompactAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
     }

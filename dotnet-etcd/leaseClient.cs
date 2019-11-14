@@ -1,8 +1,8 @@
-﻿using Etcdserverpb;
-using Grpc.Core;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Etcdserverpb;
+using Grpc.Core;
 
 namespace dotnet_etcd
 {
@@ -15,21 +15,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public LeaseGrantResponse LeaseGrant(LeaseGrantRequest request)
+        public LeaseGrantResponse LeaseGrant(LeaseGrantRequest request, Metadata headers = null)
         {
-            try
+            LeaseGrantResponse response = new LeaseGrantResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _leaseClient.LeaseGrant(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().leaseClient.LeaseGrant(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -39,21 +46,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<LeaseGrantResponse> LeaseGrantAsync(LeaseGrantRequest request)
+        public async Task<LeaseGrantResponse> LeaseGrantAsync(LeaseGrantRequest request, Metadata headers = null)
         {
-            try
+            LeaseGrantResponse response = new LeaseGrantResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _leaseClient.LeaseGrantAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().leaseClient.LeaseGrantAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -61,21 +75,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public LeaseRevokeResponse LeaseRevoke(LeaseRevokeRequest request)
+        public LeaseRevokeResponse LeaseRevoke(LeaseRevokeRequest request, Metadata headers = null)
         {
-            try
+            LeaseRevokeResponse response = new LeaseRevokeResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _leaseClient.LeaseRevoke(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().leaseClient.LeaseRevoke(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
         /// <summary>
@@ -83,21 +104,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<LeaseRevokeResponse> LeaseRevokeAsync(LeaseRevokeRequest request)
+        public async Task<LeaseRevokeResponse> LeaseRevokeAsync(LeaseRevokeRequest request, Metadata headers = null)
         {
-            try
+            LeaseRevokeResponse response = new LeaseRevokeResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _leaseClient.LeaseRevokeAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().leaseClient.LeaseRevokeAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+            return response;
         }
 
 
@@ -108,37 +136,41 @@ namespace dotnet_etcd
         /// <param name="request"></param>
         /// <param name="method"></param>
         /// <param name="token"></param>
-        public async void LeaseKeepAlive(LeaseKeepAliveRequest request, Action<LeaseKeepAliveResponse> method, CancellationToken token)
+        public async void LeaseKeepAlive(LeaseKeepAliveRequest request, Action<LeaseKeepAliveResponse> method, CancellationToken token, Metadata headers = null)
         {
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
+                try
                 {
-                    Task leaserTask = Task.Run(async () =>
+                    using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _balancer.GetConnection().leaseClient.LeaseKeepAlive(headers))
                     {
-                        while (await leaser.ResponseStream.MoveNext(token))
+                        Task leaserTask = Task.Run(async () =>
                         {
-                            LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
-                            method(update);
-                        }
-                    });
+                            while (await leaser.ResponseStream.MoveNext(token))
+                            {
+                                LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
+                                method(update);
+                            }
+                        });
 
-                    await leaser.RequestStream.WriteAsync(request);
-                    await leaser.RequestStream.CompleteAsync();
-                    await leaserTask;
+                        await leaser.RequestStream.WriteAsync(request);
+                        await leaser.RequestStream.CompleteAsync();
+                        await leaserTask;
+                    }
+                    success = true;
                 }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
 
-            }
-            catch (RpcException ex) when (ex.Status.Equals(StatusCode.Unavailable))
-            {
-                // If connection issue, then re-initate the LeaseKeepAlive request
-                ResetConnection(ex);
-                LeaseKeepAlive(request, method, token);
-            }
-            catch
-            {
-                throw;
-            }
         }
 
         /// <summary>
@@ -148,42 +180,46 @@ namespace dotnet_etcd
         /// <param name="request"></param>
         /// <param name="methods"></param>
         /// <param name="token"></param>
-        public async void LeaseKeepAlive(LeaseKeepAliveRequest request, Action<LeaseKeepAliveResponse>[] methods, CancellationToken token)
+        public async void LeaseKeepAlive(LeaseKeepAliveRequest request, Action<LeaseKeepAliveResponse>[] methods, CancellationToken token, Metadata headers = null)
         {
 
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
+                try
                 {
-                    Task leaserTask = Task.Run(async () =>
+                    using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _balancer.GetConnection().leaseClient.LeaseKeepAlive(headers))
                     {
-                        while (await leaser.ResponseStream.MoveNext(token))
+                        Task leaserTask = Task.Run(async () =>
                         {
-                            LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
-                            foreach (Action<LeaseKeepAliveResponse> method in methods)
+                            while (await leaser.ResponseStream.MoveNext(token))
                             {
-                                method(update);
+                                LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
+                                foreach (Action<LeaseKeepAliveResponse> method in methods)
+                                {
+                                    method(update);
+                                }
+
                             }
+                        });
 
-                        }
-                    });
-
-                    await leaser.RequestStream.WriteAsync(request);
-                    await leaser.RequestStream.CompleteAsync();
-                    await leaserTask;
+                        await leaser.RequestStream.WriteAsync(request);
+                        await leaser.RequestStream.CompleteAsync();
+                        await leaserTask;
+                    }
+                    success = true;
                 }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
 
-            }
-            catch (RpcException ex) when (ex.Status.Equals(StatusCode.Unavailable))
-            {
-                // If connection issue, then re-initate the LeaseKeepAlive request
-                ResetConnection(ex);
-                LeaseKeepAlive(request, methods, token);
-            }
-            catch
-            {
-                throw;
-            }
         }
 
 
@@ -194,42 +230,46 @@ namespace dotnet_etcd
         /// <param name="requests"></param>
         /// <param name="method"></param>
         /// <param name="token"></param>
-        public async void LeaseKeepAlive(LeaseKeepAliveRequest[] requests, Action<LeaseKeepAliveResponse> method, CancellationToken token)
+        public async void LeaseKeepAlive(LeaseKeepAliveRequest[] requests, Action<LeaseKeepAliveResponse> method, CancellationToken token, Metadata headers = null)
         {
-
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
+                try
                 {
-                    Task leaserTask = Task.Run(async () =>
+
+                    using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _balancer.GetConnection().leaseClient.LeaseKeepAlive(headers))
                     {
-                        while (await leaser.ResponseStream.MoveNext(token))
+                        Task leaserTask = Task.Run(async () =>
                         {
-                            LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
-                            method(update);
+                            while (await leaser.ResponseStream.MoveNext(token))
+                            {
+                                LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
+                                method(update);
+                            }
+                        });
+
+                        foreach (LeaseKeepAliveRequest request in requests)
+                        {
+                            await leaser.RequestStream.WriteAsync(request);
                         }
-                    });
 
-                    foreach (LeaseKeepAliveRequest request in requests)
-                    {
-                        await leaser.RequestStream.WriteAsync(request);
+                        await leaser.RequestStream.CompleteAsync();
+                        await leaserTask;
                     }
-
-                    await leaser.RequestStream.CompleteAsync();
-                    await leaserTask;
+                    success = true;
                 }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
 
-            }
-            catch (RpcException ex) when (ex.Status.Equals(StatusCode.Unavailable))
-            {
-                // If connection issue, then re-initate the LeaseKeepAlive request
-                ResetConnection(ex);
-                LeaseKeepAlive(requests, method, token);
-            }
-            catch
-            {
-                throw;
-            }
         }
 
 
@@ -240,74 +280,97 @@ namespace dotnet_etcd
         /// <param name="requests"></param>
         /// <param name="methods"></param>
         /// <param name="token"></param>
-        public async void LeaseKeepAlive(LeaseKeepAliveRequest[] requests, Action<LeaseKeepAliveResponse>[] methods, CancellationToken token)
+        public async void LeaseKeepAlive(LeaseKeepAliveRequest[] requests, Action<LeaseKeepAliveResponse>[] methods, CancellationToken token, Metadata headers = null)
         {
-
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _leaseClient.LeaseKeepAlive(_headers))
+                try
                 {
-                    Task leaserTask = Task.Run(async () =>
+                    using (AsyncDuplexStreamingCall<LeaseKeepAliveRequest, LeaseKeepAliveResponse> leaser = _balancer.GetConnection().leaseClient.LeaseKeepAlive(headers))
                     {
-                        while (await leaser.ResponseStream.MoveNext(token))
+                        Task leaserTask = Task.Run(async () =>
                         {
-                            LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
-                            foreach (Action<LeaseKeepAliveResponse> method in methods)
+                            while (await leaser.ResponseStream.MoveNext(token))
                             {
-                                method(update);
+                                LeaseKeepAliveResponse update = leaser.ResponseStream.Current;
+                                foreach (Action<LeaseKeepAliveResponse> method in methods)
+                                {
+                                    method(update);
+                                }
+
                             }
+                        });
 
+                        foreach (LeaseKeepAliveRequest request in requests)
+                        {
+                            await leaser.RequestStream.WriteAsync(request);
                         }
-                    });
 
-                    foreach (LeaseKeepAliveRequest request in requests)
-                    {
-                        await leaser.RequestStream.WriteAsync(request);
+                        await leaser.RequestStream.CompleteAsync();
+                        await leaserTask;
                     }
-
-                    await leaser.RequestStream.CompleteAsync();
-                    await leaserTask;
+                    success = true;
                 }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
 
-            }
-            catch (RpcException ex) when (ex.Status.Equals(StatusCode.Unavailable))
-            {
-                // If connection issue, then re-initate the watch
-                ResetConnection(ex);
-                LeaseKeepAlive(requests, methods, token);
-            }
-            catch
-            {
-                throw;
-            }
         }
 
-        public LeaseTimeToLiveResponse LeaseTimeToLive(LeaseTimeToLiveRequest request)
+        public LeaseTimeToLiveResponse LeaseTimeToLive(LeaseTimeToLiveRequest request, Metadata headers = null)
         {
-
-            try
+            LeaseTimeToLiveResponse response = new LeaseTimeToLiveResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return _leaseClient.LeaseTimeToLive(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().leaseClient.LeaseTimeToLive(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
+            return response;
         }
 
-        public async Task<LeaseTimeToLiveResponse> LeaseTimeToLiveAsync(LeaseTimeToLiveRequest request)
+        public async Task<LeaseTimeToLiveResponse> LeaseTimeToLiveAsync(LeaseTimeToLiveRequest request, Metadata headers = null)
         {
-
-            try
+            LeaseTimeToLiveResponse response = new LeaseTimeToLiveResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                return await _leaseClient.LeaseTimeToLiveAsync(request, _headers);
+                try
+                {
+                    response = await _balancer.GetConnection().leaseClient.LeaseTimeToLiveAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
+            return response;
         }
     }
 }

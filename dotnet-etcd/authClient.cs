@@ -1,32 +1,85 @@
-﻿using Etcdserverpb;
-using Grpc.Core;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Etcdserverpb;
+using Grpc.Core;
 
 namespace dotnet_etcd
 {
     public partial class EtcdClient : IDisposable
     {
+        public AuthenticateResponse Authenticate(AuthenticateRequest request, Metadata headers = null)
+        {
+            AuthenticateResponse response = new AuthenticateResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
+            {
+                try
+                {
+                    response = _balancer.GetConnection().authClient.Authenticate(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
+            return response;
+        }
+
+        public async Task<AuthenticateResponse> AuthenticateAsync(AuthenticateRequest request, Metadata headers = null)
+        {
+            AuthenticateResponse response = new AuthenticateResponse();
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
+            {
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.AuthenticateAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
+            }
+            return response;
+        }
+
         /// <summary>
         /// AuthEnable enables authentication
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthEnableResponse AuthEnable(AuthEnableRequest request)
+        public AuthEnableResponse AuthEnable(AuthEnableRequest request, Metadata headers = null)
         {
             AuthEnableResponse response = new AuthEnableResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.AuthEnable(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.AuthEnable(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -36,21 +89,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthEnableResponse> AuthEnableAsync(AuthEnableRequest request)
+        public async Task<AuthEnableResponse> AuthEnableAsync(AuthEnableRequest request, Metadata headers = null)
         {
             AuthEnableResponse response = new AuthEnableResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.AuthEnableAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.AuthEnableAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -60,21 +118,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthDisableResponse AuthDisable(AuthDisableRequest request)
+        public AuthDisableResponse AuthDisable(AuthDisableRequest request, Metadata headers = null)
         {
             AuthDisableResponse response = new AuthDisableResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.AuthDisable(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.AuthDisable(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -84,21 +147,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthDisableResponse> AuthDisableAsync(AuthDisableRequest request)
+        public async Task<AuthDisableResponse> AuthDisableAsync(AuthDisableRequest request, Metadata headers = null)
         {
             AuthDisableResponse response = new AuthDisableResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.AuthDisableAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.AuthDisableAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -108,22 +176,27 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserAddResponse UserAdd(AuthUserAddRequest request)
+        public AuthUserAddResponse UserAdd(AuthUserAddRequest request, Metadata headers = null)
         {
 
             AuthUserAddResponse response = new AuthUserAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserAdd(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserAdd(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -133,22 +206,27 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserAddResponse> UserAddAsync(AuthUserAddRequest request)
+        public async Task<AuthUserAddResponse> UserAddAsync(AuthUserAddRequest request, Metadata headers = null)
         {
 
             AuthUserAddResponse response = new AuthUserAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserAddAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserAddAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -158,21 +236,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserGetResponse UserGet(AuthUserGetRequest request)
+        public AuthUserGetResponse UserGet(AuthUserGetRequest request, Metadata headers = null)
         {
             AuthUserGetResponse response = new AuthUserGetResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserGet(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserGet(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -182,21 +265,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserGetResponse> UserGetAsync(AuthUserGetRequest request)
+        public async Task<AuthUserGetResponse> UserGetAsync(AuthUserGetRequest request, Metadata headers = null)
         {
             AuthUserGetResponse response = new AuthUserGetResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserGetAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserGetAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -206,22 +294,28 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserListResponse UserList(AuthUserListRequest request)
+        public AuthUserListResponse UserList(AuthUserListRequest request, Metadata headers = null)
         {
             AuthUserListResponse response = new AuthUserListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserList(request, _headers);
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserList(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
-            }
+
             return response;
         }
 
@@ -230,21 +324,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserListResponse> UserListAsync(AuthUserListRequest request)
+        public async Task<AuthUserListResponse> UserListAsync(AuthUserListRequest request, Metadata headers = null)
         {
             AuthUserListResponse response = new AuthUserListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserListAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserListAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -254,21 +353,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserDeleteResponse UserDelete(AuthUserDeleteRequest request)
+        public AuthUserDeleteResponse UserDelete(AuthUserDeleteRequest request, Metadata headers = null)
         {
             AuthUserDeleteResponse response = new AuthUserDeleteResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserDelete(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserDelete(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -278,21 +382,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserDeleteResponse> UserDeleteAsync(AuthUserDeleteRequest request)
+        public async Task<AuthUserDeleteResponse> UserDeleteAsync(AuthUserDeleteRequest request, Metadata headers = null)
         {
             AuthUserDeleteResponse response = new AuthUserDeleteResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserDeleteAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserDeleteAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -302,21 +411,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserChangePasswordResponse UserChangePassword(AuthUserChangePasswordRequest request)
+        public AuthUserChangePasswordResponse UserChangePassword(AuthUserChangePasswordRequest request, Metadata headers = null)
         {
             AuthUserChangePasswordResponse response = new AuthUserChangePasswordResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserChangePassword(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserChangePassword(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -326,21 +440,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserChangePasswordResponse> UserChangePasswordAsync(AuthUserChangePasswordRequest request)
+        public async Task<AuthUserChangePasswordResponse> UserChangePasswordAsync(AuthUserChangePasswordRequest request, Metadata headers = null)
         {
             AuthUserChangePasswordResponse response = new AuthUserChangePasswordResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserChangePasswordAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserChangePasswordAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -350,21 +469,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserGrantRoleResponse UserGrantRole(AuthUserGrantRoleRequest request)
+        public AuthUserGrantRoleResponse UserGrantRole(AuthUserGrantRoleRequest request, Metadata headers = null)
         {
             AuthUserGrantRoleResponse response = new AuthUserGrantRoleResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserGrantRole(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserGrantRole(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -374,21 +498,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserGrantRoleResponse> UserGrantRoleAsync(AuthUserGrantRoleRequest request)
+        public async Task<AuthUserGrantRoleResponse> UserGrantRoleAsync(AuthUserGrantRoleRequest request, Metadata headers = null)
         {
             AuthUserGrantRoleResponse response = new AuthUserGrantRoleResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserGrantRoleAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserGrantRoleAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -398,21 +527,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthUserRevokeRoleResponse UserRevokeRole(AuthUserRevokeRoleRequest request)
+        public AuthUserRevokeRoleResponse UserRevokeRole(AuthUserRevokeRoleRequest request, Metadata headers = null)
         {
             AuthUserRevokeRoleResponse response = new AuthUserRevokeRoleResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.UserRevokeRole(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.UserRevokeRole(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -422,21 +556,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthUserRevokeRoleResponse> UserRevokeRoleAsync(AuthUserRevokeRoleRequest request)
+        public async Task<AuthUserRevokeRoleResponse> UserRevokeRoleAsync(AuthUserRevokeRoleRequest request, Metadata headers = null)
         {
             AuthUserRevokeRoleResponse response = new AuthUserRevokeRoleResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.UserRevokeRoleAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.UserRevokeRoleAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -446,21 +585,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleAddResponse RoleAdd(AuthRoleAddRequest request)
+        public AuthRoleAddResponse RoleAdd(AuthRoleAddRequest request, Metadata headers = null)
         {
             AuthRoleAddResponse response = new AuthRoleAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleAdd(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleAdd(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -470,21 +614,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleAddResponse> RoleAddAsync(AuthRoleAddRequest request)
+        public async Task<AuthRoleAddResponse> RoleAddAsync(AuthRoleAddRequest request, Metadata headers = null)
         {
             AuthRoleAddResponse response = new AuthRoleAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleAddAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleAddAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -494,21 +643,27 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleGetResponse RoleGet(AuthRoleGetRequest request)
+        public AuthRoleGetResponse RoleGet(AuthRoleGetRequest request, Metadata headers = null)
         {
             AuthRoleGetResponse response = new AuthRoleGetResponse();
-            try
+
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleGet(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleGet(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -518,21 +673,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleGetResponse> RoleGetASync(AuthRoleGetRequest request)
+        public async Task<AuthRoleGetResponse> RoleGetASync(AuthRoleGetRequest request, Metadata headers = null)
         {
             AuthRoleGetResponse response = new AuthRoleGetResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleGetAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleGetAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -542,21 +702,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleListResponse RoleList(AuthRoleListRequest request)
+        public AuthRoleListResponse RoleList(AuthRoleListRequest request, Metadata headers = null)
         {
             AuthRoleListResponse response = new AuthRoleListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleList(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleList(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -566,21 +731,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleListResponse> RoleListAsync(AuthRoleListRequest request)
+        public async Task<AuthRoleListResponse> RoleListAsync(AuthRoleListRequest request, Metadata headers = null)
         {
             AuthRoleListResponse response = new AuthRoleListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleListAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleListAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -590,21 +760,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleDeleteResponse RoleDelete(AuthRoleDeleteRequest request)
+        public AuthRoleDeleteResponse RoleDelete(AuthRoleDeleteRequest request, Metadata headers = null)
         {
             AuthRoleDeleteResponse response = new AuthRoleDeleteResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleDelete(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleDelete(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -614,21 +789,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleDeleteResponse> RoleDeleteAsync(AuthRoleDeleteRequest request)
+        public async Task<AuthRoleDeleteResponse> RoleDeleteAsync(AuthRoleDeleteRequest request, Metadata headers = null)
         {
             AuthRoleDeleteResponse response = new AuthRoleDeleteResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleDeleteAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleDeleteAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -638,21 +818,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleGrantPermissionResponse RoleGrantPermission(AuthRoleGrantPermissionRequest request)
+        public AuthRoleGrantPermissionResponse RoleGrantPermission(AuthRoleGrantPermissionRequest request, Metadata headers = null)
         {
             AuthRoleGrantPermissionResponse response = new AuthRoleGrantPermissionResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleGrantPermission(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleGrantPermission(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -662,21 +847,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleGrantPermissionResponse> RoleGrantPermissionAsync(AuthRoleGrantPermissionRequest request)
+        public async Task<AuthRoleGrantPermissionResponse> RoleGrantPermissionAsync(AuthRoleGrantPermissionRequest request, Metadata headers = null)
         {
             AuthRoleGrantPermissionResponse response = new AuthRoleGrantPermissionResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleGrantPermissionAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleGrantPermissionAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -686,21 +876,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public AuthRoleRevokePermissionResponse RoleRevokePermission(AuthRoleRevokePermissionRequest request)
+        public AuthRoleRevokePermissionResponse RoleRevokePermission(AuthRoleRevokePermissionRequest request, Metadata headers = null)
         {
             AuthRoleRevokePermissionResponse response = new AuthRoleRevokePermissionResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _authClient.RoleRevokePermission(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().authClient.RoleRevokePermission(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -710,21 +905,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<AuthRoleRevokePermissionResponse> RoleRevokePermissionAsync(AuthRoleRevokePermissionRequest request)
+        public async Task<AuthRoleRevokePermissionResponse> RoleRevokePermissionAsync(AuthRoleRevokePermissionRequest request, Metadata headers = null)
         {
             AuthRoleRevokePermissionResponse response = new AuthRoleRevokePermissionResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _authClient.RoleRevokePermissionAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().authClient.RoleRevokePermissionAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }

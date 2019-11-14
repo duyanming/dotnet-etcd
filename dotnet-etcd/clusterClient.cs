@@ -1,7 +1,7 @@
-﻿using Etcdserverpb;
-using Grpc.Core;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Etcdserverpb;
+using Grpc.Core;
 
 namespace dotnet_etcd
 {
@@ -12,21 +12,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public MemberAddResponse MemberAdd(MemberAddRequest request)
+        public MemberAddResponse MemberAdd(MemberAddRequest request, Metadata headers = null)
         {
             MemberAddResponse response = new MemberAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _clusterClient.MemberAdd(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().clusterClient.MemberAdd(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -36,21 +41,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<MemberAddResponse> MemberAddAsync(MemberAddRequest request)
+        public async Task<MemberAddResponse> MemberAddAsync(MemberAddRequest request, Metadata headers = null)
         {
             MemberAddResponse response = new MemberAddResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _clusterClient.MemberAddAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().clusterClient.MemberAddAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -60,21 +70,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public MemberRemoveResponse MemberRemove(MemberRemoveRequest request)
+        public MemberRemoveResponse MemberRemove(MemberRemoveRequest request, Metadata headers = null)
         {
             MemberRemoveResponse response = new MemberRemoveResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _clusterClient.MemberRemove(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().clusterClient.MemberRemove(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -84,21 +99,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<MemberRemoveResponse> MemberRemoveAsync(MemberRemoveRequest request)
+        public async Task<MemberRemoveResponse> MemberRemoveAsync(MemberRemoveRequest request, Metadata headers = null)
         {
             MemberRemoveResponse response = new MemberRemoveResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _clusterClient.MemberRemoveAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().clusterClient.MemberRemoveAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -108,21 +128,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public MemberUpdateResponse MemberUpdate(MemberUpdateRequest request)
+        public MemberUpdateResponse MemberUpdate(MemberUpdateRequest request, Metadata headers = null)
         {
             MemberUpdateResponse response = new MemberUpdateResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _clusterClient.MemberUpdate(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().clusterClient.MemberUpdate(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -132,21 +157,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<MemberUpdateResponse> MemberUpdateAsync(MemberUpdateRequest request)
+        public async Task<MemberUpdateResponse> MemberUpdateAsync(MemberUpdateRequest request, Metadata headers = null)
         {
             MemberUpdateResponse response = new MemberUpdateResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _clusterClient.MemberUpdateAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().clusterClient.MemberUpdateAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -156,21 +186,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public MemberListResponse MemberList(MemberListRequest request)
+        public MemberListResponse MemberList(MemberListRequest request, Metadata headers = null)
         {
             MemberListResponse response = new MemberListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = _clusterClient.MemberList(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = _balancer.GetConnection().clusterClient.MemberList(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
@@ -180,21 +215,26 @@ namespace dotnet_etcd
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<MemberListResponse> MemberListAsync(MemberListRequest request)
+        public async Task<MemberListResponse> MemberListAsync(MemberListRequest request, Metadata headers = null)
         {
             MemberListResponse response = new MemberListResponse();
-            try
+            bool success = false;
+            int retryCount = 0;
+            while (!success)
             {
-                response = await _clusterClient.MemberListAsync(request, _headers);
-            }
-            catch (RpcException ex)
-            {
-                ResetConnection(ex);
-                throw;
-            }
-            catch
-            {
-                throw;
+                try
+                {
+                    response = await _balancer.GetConnection().clusterClient.MemberListAsync(request, headers);
+                    success = true;
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+                {
+                    retryCount++;
+                    if (retryCount >= _balancer._numNodes)
+                    {
+                        throw ex;
+                    }
+                }
             }
             return response;
         }
